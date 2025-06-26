@@ -6,9 +6,14 @@ import { validateBentoLayout } from '../validators/bentoValidator';
 import { ValidationConfig, ValidationError } from '../types';
 import { EntryProps } from 'contentful-management/dist/typings/entities/entry';
 
+// Allow tests to override config
+declare global {
+  interface Window { __TEST_VALIDATION_CONFIG__?: ValidationConfig; }
+}
+
 // Define a sample configuration for now
 // In a real scenario, this would come from app config or content type settings
-const TEMP_CONFIG: ValidationConfig = {
+const DEFAULT_CONFIG: ValidationConfig = {
   layoutType: 'bento-1-2',
   targetContentType: 'CardsContainer', // This should match the content type of the entry being edited
   validateField: ['contentCards'], // This should match the field ID where this component is used
@@ -26,6 +31,8 @@ const TEMP_CONFIG: ValidationConfig = {
     },
   },
 };
+
+const getConfig = (): ValidationConfig => (typeof window !== 'undefined' && window.__TEST_VALIDATION_CONFIG__) || DEFAULT_CONFIG;
 
 const Field = () => {
   const sdk = useSDK<FieldAppSDK>();
@@ -45,7 +52,7 @@ const Field = () => {
 
     if (!linkedEntryIds || linkedEntryIds.length === 0) {
       // Validate with empty array if no entries are linked yet
-      const result = validateBentoLayout(TEMP_CONFIG, []);
+      const result = validateBentoLayout(getConfig(), []);
       setErrors(result.errors);
       return;
     }
@@ -72,7 +79,7 @@ const Field = () => {
         })
       );
 
-      const result = validateBentoLayout(TEMP_CONFIG, fetchedEntries);
+      const result = validateBentoLayout(getConfig(), fetchedEntries);
       setErrors(result.errors);
 
     } catch (error) {
