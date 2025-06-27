@@ -13,26 +13,30 @@ const getContentTypeIdFromLink = (entry: any): string | null => {
 
 export const validateBentoLayout = (
   config: ValidationConfig,
-  linkedEntries: EntryProps[] | null | undefined // Array of linked content entries
+  linkedEntriesInput: EntryProps[] | null | undefined // Array of linked content entries
 ): ValidationResult => {
   const errors: ValidationError[] = [];
-
-  if (!linkedEntries || linkedEntries.length === 0) {
-    if (config.limits.totalEntries > 0) {
-      // errors.push({ message: `No entries found, but layout expects at least one.` });
-      // Depending on requirements, this might not be an error if 0 entries are allowed.
-      // For now, let's assume if totalEntries > 0, it's an error.
-    }
-    // If no entries and no totalEntries limit, or totalEntries is 0, it's valid.
-    return { isValid: errors.length === 0, errors };
-  }
+  const linkedEntries = linkedEntriesInput || []; // Normalize to empty array if null/undefined
 
   // 1. Validate total number of entries
+  // This check handles cases:
+  // - Correct number of entries
+  // - Too few entries (including 0 when more are expected)
+  // - Too many entries
   if (linkedEntries.length !== config.limits.totalEntries) {
     errors.push({
       message: `Expected ${config.limits.totalEntries} entries, but found ${linkedEntries.length}.`,
     });
   }
+
+  // Early exit if totalEntries is 0 and linkedEntries is also 0 (valid case, no further checks needed)
+  // Also, if totalEntries check failed AND no entries were provided, no point in checking positions or type limits.
+  if (config.limits.totalEntries === 0 && linkedEntries.length === 0) {
+    return { isValid: errors.length === 0, errors }; // errors should be empty here
+  }
+
+  // If there's a total entry mismatch and no entries are present, further checks for positions are not super useful
+  // but the current structure runs them. This is acceptable.
 
   // 2. Validate positions and allowed content types
   for (const positionKey in config.positions) {

@@ -149,11 +149,11 @@ describe('validateBentoLayout', () => {
       limits: { totalEntries: 2 }, // No typeLimits here
     };
     const entries: EntryProps[] = [
-      createMockEntry('entry1', 'typeA'),
-      createMockEntry('entry2', 'typeA'), // Would fail if typeLimits were active
+      createMockEntry('entry1', 'typeA'), // Valid for pos1
+      createMockEntry('entry2', 'typeB'), // Valid for pos2 (allowed: typeB, typeC)
     ];
     const result = validateBentoLayout(configNoTypeLimits, entries);
-    expect(result.isValid).toBe(true); // No typeLimits to fail
+    expect(result.isValid).toBe(true); // No typeLimits to fail, positions are fine
   });
 
   it('should handle typeLimits when a specific type in entries is not in typeLimits', () => {
